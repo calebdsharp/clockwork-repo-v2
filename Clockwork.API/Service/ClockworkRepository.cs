@@ -4,17 +4,17 @@ using Clockwork.API.Models;
 
 namespace Clockwork.API.Service
 {
-    public class ClockWorkRepository
+    internal struct ClockWorkRepository
     {
         public static void InsertNewEntry(CurrentTimeQuery newEntry)
         {
-            var db = new ClockworkContext();
             // insert new entry to database
+            var db = new ClockworkContext();
             db.CurrentTimeQueries.Add(newEntry);
             Console.WriteLine("{0} records(s) saved to database", db.SaveChanges());
         }
 
-        public static IOrderedQueryable<CurrentTimeQuery> GetAllTimeRequests()
+        public static IOrderedQueryable<CurrentTimeQuery> FetchAll()
         {
             // get all entries
             var db = new ClockworkContext();

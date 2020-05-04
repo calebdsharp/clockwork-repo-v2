@@ -1,8 +1,0 @@
-﻿@model Clockwork.Web.Models.AvailableTimezonesModel
-
-<div>
-    <label for="zone"><strong>Choose a Timezone:</strong></label>
-</div>
-@Html.DropDownListFor(m => m.SelectedTimezoneId, Model.Timezones, "--Click Here--", new { id = "zone" })
-<br />
-<button type="button" value="Get Time" id="myButton" onclick="AddNewTime()">Get Time</button>

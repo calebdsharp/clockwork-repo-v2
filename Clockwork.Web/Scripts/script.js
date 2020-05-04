@@ -1,41 +1,48 @@
 ﻿function AddNewTime() {
     const selectedTimezoneId = document.getElementById('zone').value;
-    fetch('/Home/requestedtimezone?selectedTimezoneId=' + selectedTimezoneId, {
+    fetch('/Home/Index?SelectedTimezoneId=' + selectedTimezoneId, {
         method: 'POST',
+        body: JSON.stringify({
+            TimeZone: this.TimeZone,
+            Time: this.Time,
+            ClientIp: this.ClientIp,
+            UTCTime: this.UTCTime,
+            CurrentTimeQueryId: this.CurrentTimeQueryId
+        }),
         headers: {
-            'Accept': 'application/json',
             'Content-type': 'application/json'
         }
-    }).then(function (response) {
-        if (response.status != 200) {
-            console.log('Something went wrong. Status code: ' + response.status);
-            return;
-        }
-        response.json().then(function (currentTimeData) {
-            const currentTimeDiv = document.getElementById('requestedTimezoneDiv');
-
-            console.log(currentTimeData);
-
-            const entries = currentTimeData.AllTimeQueries.CurrentTimeQueries;
-            console.log(entries);
-
-            entries.reverse();
-
-            // timezone info for new entry  
-            const timeZone = currentTimeData.CurrentTimeQuery.TimeZone;
-
-            // timezone and time display   
-            const currentTime = moment(currentTimeData.CurrentTimeQuery.Time).format('lll');
-
-            currentTimeDiv.textContent = 'The time in ' + timeZone + ' is: ' + currentTime;
-
-            DisplayTimes(entries);
-        });
     })
+        .then(function (response) {
+            if (response.status != 200) {
+                console.log('Something went wrong. Status code: ' + response.status);
+                return;
+            }
+            response.json().then(function (currentTimeData) {
+                console.log(currentTimeData)
+
+                // new entry object
+                const newTimezoneInfo = currentTimeData.newEntry;
+                // all entries from database : CurrentTimeController / API 
+                const entries = currentTimeData.allEntries;
+                // add new entry to top of the list
+                entries.reverse();
+                // timezone info for new entry
+                const timeZone = newTimezoneInfo.timeZone;
+                // timezone and time display  
+                const currentTime = moment(newTimezoneInfo.time).format('lll');
+
+                document.getElementById('currentTimeText').textContent = 'The time in ' + timeZone + ' is: ' + currentTime;
+
+                DisplayTimes(entries);
+            });
+        })
         .catch(function (err) {
             console.log('Fetch error', err);
         });
+
 }
+
 
 function AllEntries() {
     fetch('Home/GetRequestedTimes')
@@ -46,13 +53,10 @@ function AllEntries() {
                     return;
                 }
                 response.json().then(function (myData) {
-                    console.log(myData);
 
-                    const entries = myData.AllTimeQueries.CurrentTimeQueries;
+                    myData.reverse();
 
-                    entries.reverse();
-
-                    DisplayTimes(entries);
+                    DisplayTimes(myData)
 
                 });
             })
@@ -60,6 +64,7 @@ function AllEntries() {
             console.log("Fetch error", err);
         });
 }
+
 
 function DisplayTimes(entries) {
 
@@ -75,27 +80,27 @@ function DisplayTimes(entries) {
         // Timezone Name   
         const timezoneName = document.createElement('li')
         timezoneName.setAttribute('class', 'timezoneName')
-        timezoneName.textContent = `Timezone: ${timezone.TimeZone}`;
+        timezoneName.textContent = `Timezone: ${timezone.timeZone}`;
 
         //Timezone Time
         const timezoneTime = document.createElement('li')
         timezoneTime.setAttribute('class', 'timezoneTime')
-        timezoneTime.textContent = `Time: ${moment(timezone.Time).format('lll')}`;
+        timezoneTime.textContent = `Time: ${moment(timezone.time).format('lll')}`;
 
         // Timezone ClientIP
         const timezoneClientIp = document.createElement('li')
         timezoneClientIp.setAttribute('class', 'timezoneCleintIp')
-        timezoneClientIp.textContent = `ClientIp: ${timezone.ClientIp}`;
+        timezoneClientIp.textContent = `ClientIp: ${timezone.clientIp}`;
 
         // Timezone UTCTime
         const timezoneUTCTime = document.createElement('li')
         timezoneUTCTime.setAttribute('class', 'timezoneUTCTime')
-        timezoneUTCTime.textContent = `UTCTime: ${moment(timezone.UTCTime).format('lll')}`;
+        timezoneUTCTime.textContent = `UTCTime: ${moment(timezone.utcTime).format('lll')}`;
 
         // Timezone CurrentTimeQueryId
         const timezoneCurrentTimeQueryId = document.createElement('li')
         timezoneCurrentTimeQueryId.setAttribute('class', 'timezoneCurrentTimeQueryId')
-        timezoneCurrentTimeQueryId.textContent = `CurrentTimeQueryId: ${timezone.CurrentTimeQueryId}`;
+        timezoneCurrentTimeQueryId.textContent = `CurrentTimeQueryId: ${timezone.currentTimeQueryId}`;
 
         timeDiv.appendChild(timezoneList)
 
@@ -107,3 +112,4 @@ function DisplayTimes(entries) {
 
     })
 }
+

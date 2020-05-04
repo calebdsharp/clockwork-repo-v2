@@ -2,12 +2,9 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Mvc;
 using System.Web.Script.Serialization;
 using Clockwork.Web.Models;
-using Newtonsoft.Json;
 
 namespace Clockwork.Web.Controllers
 {
@@ -17,62 +14,35 @@ namespace Clockwork.Web.Controllers
 
         public ActionResult Index()
         {
-            return View();
-        }
-
-        public PartialViewResult AvailableTimezones()
-        {
             List<SelectListItem> items = new List<SelectListItem>();
             IReadOnlyCollection<TimeZoneInfo> timeZoneInfos = TimeZoneInfo.GetSystemTimeZones();
             foreach (TimeZoneInfo info in timeZoneInfos)
             {
                 SelectListItem item = new SelectListItem() { Text = info.Id, Value = info.Id };
                 items.Add(item);
-            };
+            }
 
-            var model = new AvailableTimezonesModel
+            var model = new AllTimesViewModel
             {
                 Timezones = items
             };
 
-            return PartialView("AvailableTimezones", model);
+            return View(model);
         }
 
         [HttpPost]
-        public async Task<ActionResult> RequestedTimezone(string selectedTimezoneId)
+        public ActionResult Index(string SelectedTimezoneId)
         {
             client = new HttpClient();
             client.BaseAddress = new Uri("http://localhost:5000/");
 
-            HttpContent content = new StringContent(JsonConvert.SerializeObject(selectedTimezoneId), Encoding.UTF8, "application/json");
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            string response = client.GetStringAsync("/api/currenttime?timezone=" + SelectedTimezoneId).Result;
 
-            HttpResponseMessage response = await client.PostAsync("api/requestedtimezone?timezone=" + selectedTimezoneId, content);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            var currentTime = new JavaScriptSerializer().DeserializeObject(response);
 
-            var responseObject = JsonConvert.DeserializeObject<AllQueriesModel>(responseContent);
-            Console.WriteLine("Web Timezone: {0}", responseObject.CurrentTimeQuery.TimeZone);
-
-            //var newEntry = new CurrentTimeQuery
-            //{
-            //    UTCTime = responseObject.CurrentTimeQuery.UTCTime,
-            //    Time = responseObject.CurrentTimeQuery.Time,
-            //    ClientIp = responseObject.CurrentTimeQuery.ClientIp,
-            //    TimeZone = responseObject.CurrentTimeQuery.TimeZone
-            //};
-
-            //var allTimes = new AllTimeQueries
-            //{
-            //    CurrentTimeQueries = responseObject.AllTimeQueries.CurrentTimeQueries
-            //};
-
-            //var model = new AllQueriesModel
-            //{
-            //    CurrentTimeQuery = newEntry,
-            //    AllTimeQueries = allTimes
-            //};
-
-            //return PartialView("RequestedTimezone", model);
-            return Json(responseObject, JsonRequestBehavior.AllowGet);
+            return Json(currentTime, JsonRequestBehavior.AllowGet);
         }
 
         // GET: lit of requested times
@@ -83,13 +53,12 @@ namespace Clockwork.Web.Controllers
 
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            string response = client.GetStringAsync("api/requestedtimezone").Result;
+            string response = client.GetStringAsync("api/alltimes").Result;
 
             // deserialize JSON
-            var allTimes = new JavaScriptSerializer().DeserializeObject(response);
+            var alltimes = new JavaScriptSerializer().DeserializeObject(response);
 
-            return Json(allTimes, JsonRequestBehavior.AllowGet);
-            //return View(returnModel);
+            return Json(alltimes, JsonRequestBehavior.AllowGet);
         }
     }
 }

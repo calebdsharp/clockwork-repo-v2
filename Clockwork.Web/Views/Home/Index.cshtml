@@ -1,6 +1,15 @@
-﻿
-<div id="availableTimezonesPartial">
-    @{
-        Html.RenderAction("AvailableTimezones", "Home");
-    }
-</div>
+﻿@model Clockwork.Web.Models.AllTimesViewModel
+
+@section Index {
+
+    <h3 id="getTimeHeader">Choose a Timezone:</h3>
+
+    @Html.DropDownListFor(m => m.SelectedTimezoneId, Model.Timezones, "--Select a Timezone--", new { id = "zone" })
+    <br />
+    <button type="button" value="Get Time" id="myButton" onclick="AddNewTime()">Get Time</button>
+
+    <p id="currentTimeText"></p>
+
+    <div id="timezoneDiv">
+    </div>
+}

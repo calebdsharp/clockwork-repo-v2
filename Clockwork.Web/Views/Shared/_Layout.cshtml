@@ -14,13 +14,8 @@
         </h3>
     </nav>
     <div class="main">
+        @RenderSection("Index", required: false)
         @RenderBody()
-        <div id="requestedTimezonePartial">
-            @Html.Partial("RequestedTimezone")
-        </div>
-        <div id="allTimesPartial">
-            @Html.Partial("AllTimes")
-        </div>
     </div>
     <div>
         <hr />

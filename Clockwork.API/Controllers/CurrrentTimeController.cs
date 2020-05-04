@@ -1,19 +1,16 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using Clockwork.API.Models;
+using System.Collections.Generic;
 using Clockwork.API.Service;
-using Newtonsoft.Json;
 
 namespace Clockwork.API.Controllers
 {
-    [Route("api/[controller]")]
-    public class RequestedTimezoneController : Controller
+    public class CurrentTimeController : Controller
     {
-        [HttpPost]
-        public IActionResult PostTimezone(string timezone)
+        [HttpGet("api/currenttime")]
+        public IActionResult Get(string timezone)
         {
-            
-
             // Parse timezone get timezone name
             var parsedTimeZoneInfo = ParseTimeZone(timezone);
             if (parsedTimeZoneInfo == null)
@@ -25,38 +22,25 @@ namespace Clockwork.API.Controllers
             var utcTime = DateTime.UtcNow;
             // convert UTC time to local time
             var time = TimeZoneInfo.ConvertTimeFromUtc(utcTime, parsedTimeZoneInfo);
-            var clientIp = this.HttpContext.Connection.RemoteIpAddress.ToString();
-
-            // update CurrentTimeQuery
             var newEntry = new CurrentTimeQuery
             {
                 UTCTime = utcTime,
                 Time = time,
-                ClientIp = clientIp,
-                TimeZone = parsedTimeZoneInfo.Id,
+                ClientIp = this.HttpContext.Connection.RemoteIpAddress.ToString(),
+                TimeZone = parsedTimeZoneInfo.Id
             };
 
             // insert new entry to database
             ClockWorkRepository.InsertNewEntry(newEntry);
 
-            // update AllTimeQueries
-            var allTimes = new AllTimeQueries
+            var returnData = new Dictionary<string, object>
             {
-                CurrentTimeQueries = ClockWorkRepository.GetAllTimeRequests()
+                { "newEntry", newEntry },
+                { "allEntries", ClockWorkRepository.FetchAll() }
             };
 
-            // add models to single model
-            var model = new AllQueriesModel
-            {
-                CurrentTimeQuery = newEntry,
-                AllTimeQueries = allTimes
-            };
-
-            Console.WriteLine(model.CurrentTimeQuery.TimeZone);
-
-            var json = JsonConvert.SerializeObject(model);
-
-            return Ok(json);
+            // return new entry
+            return Ok(returnData);
         }
 
         // pass timezone to method
@@ -75,25 +59,13 @@ namespace Clockwork.API.Controllers
             }
         }
 
-        [HttpGet]
-        public IActionResult GetAllTimes()
+        [HttpGet("api/alltimes")]
+        public IEnumerable<CurrentTimeQuery> GetAllTimes()
         {
             //get all time from Clockwork Repo
-            var allTimes = new AllTimeQueries
-            {
-                CurrentTimeQueries = ClockWorkRepository.GetAllTimeRequests()
-            };
+            var allTimes = ClockWorkRepository.FetchAll();
 
-            var model = new AllQueriesModel
-            {
-                AllTimeQueries = allTimes
-            };
-
-            var json = JsonConvert.SerializeObject(model);
-
-            var result = JsonConvert.DeserializeObject(json);
-
-            return Ok(result);
+            return allTimes;
         }
     }
 }
